@@ -1,0 +1,50 @@
+image:
+  repository: laravel-app
+  tag: latest
+  pullPolicy: IfNotPresent
+
+app:
+  replicas: 1
+  port: 8080
+  command:
+    - sh
+    - -c
+    - |
+      php artisan config:clear &&
+      php artisan serve --host=0.0.0.0 --port=8080
+worker:
+  replicas: 1
+  command:
+    - sh
+    - -c
+    - |
+      php artisan config:clear &&
+      php artisan queue:work redis \
+        --sleep=3 \
+        --tries=3 \
+        --timeout=90
+
+mysql:
+  image: mysql:8.0
+  database: laravel
+  user: laravel
+  password: secret
+  rootPassword: root
+  port: 3306
+
+redis:
+  image: redis:7
+  port: 6379
+
+env:
+  APP_ENV: production
+  APP_DEBUG: "true"
+  DB_CONNECTION: mysql
+  DB_HOST: mysql
+  DB_PORT: 3306
+  DB_DATABASE: laravel
+  REDIS_HOST: redis
+  REDIS_PORT: 6379
+  CACHE_DRIVER: redis
+  QUEUE_CONNECTION: redis
+  SESSION_DRIVER: redis

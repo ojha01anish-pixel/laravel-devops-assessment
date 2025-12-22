@@ -1,0 +1,7 @@
+apiVersion: v2
+name: laravel
+description: Laravel application with worker, MySQL, and Redis
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+

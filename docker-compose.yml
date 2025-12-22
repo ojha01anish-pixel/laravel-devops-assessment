@@ -1,0 +1,83 @@
+version: "3.9"
+
+services:
+  app:
+    image: laravel-app
+    container_name: laravel_app
+    ports:
+      - "8080:8080"
+    command: >
+      sh -c "
+      php artisan config:clear &&
+      php artisan serve --host=0.0.0.0 --port=8080
+      "
+    environment:
+      APP_ENV: local
+      APP_DEBUG: "true"
+      APP_KEY: base64:s7Z746wNfxrrAFZAtASkq1eOf+ld65CxXxR/JzP1Eoc=
+      DB_CONNECTION: mysql
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_DATABASE: laravel
+      DB_USERNAME: laravel
+      DB_PASSWORD: secret
+      QUEUE_CONNECTION: redis
+      REDIS_HOST: redis
+      CACHE_DRIVER: file
+      SESSION_DRIVER: file
+    depends_on:
+      - mysql
+      - redis
+
+  worker:
+    image: laravel-app
+    container_name: laravel_worker
+    command: sh -c "echo 'Worker container running (no jobs)' && tail -f /dev/null"
+    restart: always
+    environment:
+      APP_ENV: local
+      APP_DEBUG: "true"
+      APP_KEY: base64:s7Z746wNfxrrAFZAtASkq1eOf+ld65CxXxR/JzP1Eoc=
+      DB_CONNECTION: mysql
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_DATABASE: laravel
+      DB_USERNAME: laravel
+      DB_PASSWORD: secret
+      QUEUE_CONNECTION: redis
+      REDIS_HOST: redis
+      CACHE_DRIVER: file
+      SESSION_DRIVER: file
+    depends_on:
+      mysql:
+        condition: service_healthy  
+      redis:
+        condition: service_started
+
+  mysql:
+    image: mysql:8.0
+    container_name: laravel_mysql
+    restart: always
+    environment:
+      MYSQL_DATABASE: laravel
+      MYSQL_USER: laravel
+      MYSQL_PASSWORD: secret
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7
+    container_name: laravel_redis
+    ports:
+      - "6379:6379"
+
+volumes:
+  mysql_data:
