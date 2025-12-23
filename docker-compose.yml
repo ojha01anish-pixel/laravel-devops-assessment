@@ -23,8 +23,8 @@ services:
       DB_PASSWORD: secret
       QUEUE_CONNECTION: redis
       REDIS_HOST: redis
-      CACHE_DRIVER: file
-      SESSION_DRIVER: file
+      CACHE_DRIVER: redis
+      SESSION_DRIVER: redis
     depends_on:
       - mysql
       - redis
@@ -32,7 +32,14 @@ services:
   worker:
     image: laravel-app
     container_name: laravel_worker
-    command: sh -c "echo 'Worker container running (no jobs)' && tail -f /dev/null"
+    command: >
+      sh -c "
+      php artisan config:clear &&
+      php artisan queue:work redis
+        --sleep=3
+        --tries=3
+        --timeout=90
+      "
     restart: always
     environment:
       APP_ENV: local
@@ -46,8 +53,8 @@ services:
       DB_PASSWORD: secret
       QUEUE_CONNECTION: redis
       REDIS_HOST: redis
-      CACHE_DRIVER: file
-      SESSION_DRIVER: file
+      CACHE_DRIVER: redis
+      SESSION_DRIVER: redis
     depends_on:
       mysql:
         condition: service_healthy  
